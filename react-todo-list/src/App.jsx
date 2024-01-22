@@ -1,56 +1,52 @@
-import { useState } from "react"; //to implement js or make our jsx code imperatively responsive
+import { useEffect, useState } from "react"; //to implement js or make our jsx code imperatively responsive
+import { NewTodoForm } from "./NewTodoForm";
 import "./styles.css";
+import { TodoList } from "./TodoList";
 
 export default function App() {
-  const [newItem, setNewItem] = useState("");
+  //using local storage
+  const [todos, setTodos] = useState(() => {
+    const localValue = localStorage.getItem("ITEMS");
+    if (localValue == null) return [];
+    return JSON.parse(localValue);
+  });
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos));
+  }, [todos]);
 
-  const [todos, setTodos] = useState([]);
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    setTodos([
-      ...todos,
-      { id: crypto.randomUUID(), title: newItem, completed: false },
-    ]);
-    setTodos([
-      ...todos,
-      { id: crypto.randomUUID(), title: newItem, completed: false },
-    ]);
-  }
   console.log(todos);
 
+  function addTodo(title) {
+    setTodos((currentTodos) => {
+      return [
+        ...currentTodos,
+        { id: crypto.randomUUID(), title, completed: false },
+      ];
+    });
+  }
+
+  function toggleTodo(id, completed) {
+    setTodos((currentTodos) => {
+      return currentTodos.map((todo) => {
+        if (todo.id === id) {
+          return { ...todo, completed };
+          //todo.completed=completed...wrong u mutated the state here.
+        }
+        return todo;
+      });
+    });
+  }
+
+  function deleteTodo(id) {
+    setTodos((currentTodos) => {
+      return currentTodos.filter((todo) => todo.id !== id);
+    });
+  }
   return (
     <>
-      <form className="new-item-form">
-        <div className="form-row">
-          <label htmlFor="item">New Item</label>
-          <input
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            type="text"
-            id="item"
-          ></input>
-        </div>
-        <button className="btn">Add</button>
-      </form>
+      <NewTodoForm onSubmit={addTodo} />
       <h1 className="header">ToDo List</h1>
-      <ul className="list">
-        <li>
-          <label>
-            <input type="checkbox" />
-            Item 1
-          </label>
-          <button className="btn btn-danger">Delete</button>
-        </li>
-        <li>
-          <label>
-            <input type="checkbox" />
-            Item 2
-          </label>
-          <button className="btn btn-danger">Delete</button>
-        </li>
-      </ul>
+      <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo} />
     </>
   );
 }
